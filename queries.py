@@ -1,11 +1,6 @@
-from collections import defaultdict
-from datetime import datetime, timedelta
-import pprint
-import tabulate
+from datetime import datetime
 from DbConnector import DbConnector;
 from math import radians, sin, cos, sqrt, atan2
-from haversine import haversine, Unit
-
 
 
 class Queries:    
@@ -37,8 +32,8 @@ class Queries:
         pipeline = [
             {
                 "$group": {
-                    "_id": "$user_id",  # Group by user_id
-                    "activity_count": {"$sum": 1}  # Count activities for each user
+                    "_id": "$user_id",
+                    "activity_count": {"$sum": 1}
                 }
             },
             {
@@ -181,26 +176,21 @@ class Queries:
         # Dictionary to store total altitude gain for each user
         altitude_gain_by_user = {}
 
-        # Step 1: Loop through each user
         for user in self.db["User"].find():
             user_id = user["_id"]
             total_altitude_gain = 0.0
 
-            # Step 2: Retrieve user's activities
             activities = list(self.db["Activity"].find({"user_id": user_id}))
             
             # Debug: Print number of activities for the user
             print(f"Processing User {user_id}, Number of activities: {len(activities)}")
             
-            # Step 3: Process each activity's trackpoints
             for activity in activities:
                 activity_id = activity["_id"]
 
-                # Retrieve and sort trackpoints by date_time
                 trackpoints = list(self.db["TrackPoint"].find({"activity_id": activity_id, "altitude": {"$gt": -777}}).sort("date_time", 1))
                 
                 
-                # Calculate altitude gain
                 for i in range(1, len(trackpoints)):
                     previous_altitude = trackpoints[i - 1]["altitude"]
                     current_altitude = trackpoints[i]["altitude"]
@@ -208,10 +198,8 @@ class Queries:
                     if current_altitude > previous_altitude:
                         total_altitude_gain += (current_altitude - previous_altitude)
 
-            # Store the total altitude gain for this user
             altitude_gain_by_user[user_id] = total_altitude_gain
 
-        # Sort users by altitude gain and get the top 20
         top_users = sorted(altitude_gain_by_user.items(), key=lambda x: x[1], reverse=True)[:20]
 
         # Print results
@@ -224,24 +212,21 @@ class Queries:
     def find_invalid_activities(self):
         print("Finding users with invalid activities...")
 
-        # Ensure necessary indexes exist to optimize performance
         self.db["TrackPoint"].create_index("activity_id")
         self.db["Activity"].create_index("user_id")
 
-        # Step 1: Retrieve users with labels (i.e., those with known transportation modes)
         users_with_labels = self.db["User"].distinct("_id", {"has_labels": True})
 
-        # Step 2: Define the aggregation pipeline to retrieve activities and associated trackpoints
         pipeline = [
             {
                 "$match": {
-                    "user_id": {"$in": users_with_labels}  # Only users with labels
+                    "user_id": {"$in": users_with_labels}  
                 }
             },
             {
                 "$lookup": {
-                    "from": "TrackPoint",  # Join with TrackPoint collection
-                    "localField": "_id",  # Match Activity _id with TrackPoint activity_id
+                    "from": "TrackPoint", 
+                    "localField": "_id",  
                     "foreignField": "activity_id",
                     "as": "trackpoints"
                 }
@@ -254,12 +239,11 @@ class Queries:
             {
                 "$project": {
                     "user_id": 1,
-                    "trackpoints.date_time": 1  # Only project the user ID and trackpoint times
+                    "trackpoints.date_time": 1  
                 }
             }
         ]
 
-        # Step 3: Execute the aggregation pipeline and retrieve activities with their trackpoints
         activities = list(self.db["Activity"].aggregate(pipeline))
         
         if not activities:
@@ -269,15 +253,12 @@ class Queries:
         # Dictionary to store invalid activity count per user
         invalid_activities_per_user = {}
 
-        # Step 4: Process each activity's trackpoints to check for invalid time deviations
         for activity in activities:
             user_id = activity['user_id']
             trackpoints = activity['trackpoints']
 
-            # Sort trackpoints by date_time in case aggregation didn't sort correctly
             trackpoints = sorted(trackpoints, key=lambda tp: tp['date_time'])
 
-            # Extract trackpoint times
             trackpoint_times = [tp['date_time'] for tp in trackpoints if 'date_time' in tp]
             
             # Check if any consecutive trackpoints have a time deviation of >= 5 minutes
@@ -286,11 +267,9 @@ class Queries:
                 for i in range(1, len(trackpoint_times))
             )
 
-            # If the activity is invalid, increment the count for the user
             if is_invalid:
                 invalid_activities_per_user[user_id] = invalid_activities_per_user.get(user_id, 0) + 1
 
-        # Step 5: Print results in a sorted order
         sorted_invalid_activities = sorted(invalid_activities_per_user.items())
 
         print("Users with invalid activities (time deviation >= 5 minutes):")
@@ -341,7 +320,7 @@ class Queries:
         pipeline = [
             {
                 "$match": {
-                    "transportation_mode": {"$ne": None}  # Exclude null transportation modes
+                    "transportation_mode": {"$ne": None}
                 }
             },
             {
@@ -350,26 +329,26 @@ class Queries:
                         "user_id": "$user_id", 
                         "transportation_mode": "$transportation_mode"
                     },
-                    "count": {"$sum": 1}  # Count occurrences of each transportation mode per user
+                    "count": {"$sum": 1}  
                 }
             },
             {
                 "$sort": {
-                    "_id.user_id": 1,  # Sort by user_id
-                    "count": -1  # Sort by count of transportation modes
+                    "_id.user_id": 1,  
+                    "count": -1  
                 }
             },
             {
                 "$group": {
                     "_id": "$_id.user_id",
                     "most_used_mode": {
-                        "$first": "$_id.transportation_mode"  # Take the first mode with the highest count
+                        "$first": "$_id.transportation_mode"  
                     }
                 }
             },
             {
                 "$sort": {
-                    "_id": 1  # Sort by user_id in ascending order
+                    "_id": 1  
                 }
             }
         ]
