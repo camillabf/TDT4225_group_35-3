@@ -1,6 +1,7 @@
 from datetime import datetime
 from DbConnector import DbConnector;
 from math import radians, sin, cos, sqrt, atan2
+from pprint import pprint
 
 
 class Queries:    
@@ -15,6 +16,24 @@ class Queries:
         a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
+    
+    # task 1
+    def top_10_rows(self):
+        print("Top 10 rows from the User collection:")
+        user_rows = list(self.db["User"].find().limit(10))
+        for row in user_rows:
+            pprint(row)
+
+        print("\nTop 10 rows from the Activity collection:")
+        activity_rows = list(self.db["Activity"].find().limit(10))
+        for row in activity_rows:
+            pprint(row)
+
+        print("\nTop 10 rows from the TrackPoint collection:")
+        trackpoint_rows = list(self.db["TrackPoint"].find().limit(10))
+        for row in trackpoint_rows:
+            pprint(row)
+
 
     # task 2.1
     def count_entries(self):
@@ -368,31 +387,33 @@ def main():
     program = None
     try:
         program = Queries()
+        print("Task 1")
+        #program.top_10_rows()
         
-        print("Task 2.1:")
-        program.count_entries()
+        print("\nTask 2.1:")
+        #program.count_entries()
         print("\nTask 2.2:")
-        program.average_activities_per_user()
+        #program.average_activities_per_user()
         print("\nTask 2.3:")
-        program.top_20_users_with_highest_activities()
+        #program.top_20_users_with_highest_activities()
         print("\nTask 2.4:")
-        program.users_taken_taxi()
+        #program.users_taken_taxi()
         print("\nTask 2.5:")
-        program.count_transportation_modes()
+        #program.count_transportation_modes()
         print("\nTask 2.6 a):")
-        program.year_with_most_activities()
+        #program.year_with_most_activities()
         print("\nTask 2.6 b)")
-        program.year_with_most_hours()
+        #program.year_with_most_hours()
         print("\nTask 2.7:")
-        program.total_distance_walked_2008()
+        #program.total_distance_walked_2008()
         print("\nTask 2.8:")
-        program.top_20_altitude_gains()
+        #program.top_20_altitude_gains()
         print("\nTask 2.9:")
-        program.find_invalid_activities()
+        #program.find_invalid_activities()
         print("\nTask 2.10:")
-        program.find_users_in_forbidden_city()
+        #program.find_users_in_forbidden_city()
         print("\nTask 2.11:")
-        program.most_used_transport_mode()
+        #program.most_used_transport_mode()
         
     except Exception as e:
         print("ERROR: Failed to use database:", e)
