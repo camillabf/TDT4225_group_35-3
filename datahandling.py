@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from math import atan2, cos, radians, sin, sqrt
 import os
 from DbConnector import DbConnector
 
 # Paths to dataset
-DATA_PATH = "/Users/Magnusvik/Documents/NTNU 3/Data_semester 7/Store datamengder/dataset/dataset/Data/"
-LABELS_PATH = "/Users/Magnusvik/Documents/NTNU 3/Data_semester 7/Store datamengder/dataset/dataset/labeled_ids.txt"
+DATA_PATH = "/your_data_path"
+LABELS_PATH = "/your_labels_path"
 
 class GeolifeMongoDBProgram:
 
